@@ -1,0 +1,196 @@
+openapi: 3.0.0
+info:
+  title: Book Store API
+  description: API for local community book lending application
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api/v1
+paths:
+  /status:
+    get:
+      summary: Liveness probe (not available outside VPC)
+      responses:
+        '200':
+          description: OK
+  /users/{id}:
+    get:
+      summary: Returns a user and associated book URLs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type : string
+            format: uuid
+      responses: 
+        '200':
+          description: A user object (with book list)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                    example: Jessica Smith
+                  books:
+                    type: array
+                    items:
+                      type: string
+                      example: http://localhost:8000/api/v1/books/bb43ec20-8d06-11eb-8dcd-0242ac130003
+        '400':
+          description: The specified user ID is invalid.
+        '404':
+          description: A user with the specified ID was not found.
+        default:
+          description: Unexpected error
+  /books:
+    get:
+      summary: Returns a list of all books.
+      responses:
+        '200':
+          description: A JSON array of books
+          content:
+            application/json:
+              schema: 
+                type: array
+                items: 
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    isbn:
+                      type: string
+                    title:
+                      type: string
+                    cover:
+                      type: string
+                    available:
+                      type: boolean
+                    price:
+                      type: number
+                    rate:
+                      type: number
+        default:
+          description: Unexpected error
+    post:
+      summary: Adds a book.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                isbn:
+                  type: string
+                cover:
+                  type: string
+                price:
+                  type: number
+                  example: 24.99
+                rate:
+                  type: number
+                  example: 3.99
+              required:
+                - title
+                - isbn
+      responses: 
+        '201':
+          description: Created
+        default:
+          description: Unexpected error
+  /books/{id}:
+    get:
+      summary: Retrieves book data
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type : string
+            format: uuid
+      responses: 
+        '200':
+          description: A book object.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  isbn:
+                    type: string
+                  title:
+                    type: string
+                  cover:
+                    type: string
+                  available:
+                    type: boolean
+                  price:
+                    type: number
+                    example: 24.99
+                  rate:
+                    type: number
+                    example: 3.99
+                  owner:
+                    type: string
+                    example: http://localhost:8000/api/v1/users/adcd0f36-8d06-11eb-8dcd-0242ac130003
+                  borrower:
+                    type: string
+                    nullable: true
+                    example: http://localhost:8000/api/v1/users/bb43ec20-8d06-11eb-8dcd-0242ac130003
+        '400':
+          description: The specified book ID is invalid.
+        '404':
+          description: A book with the specified ID was not found.
+        default:
+          description: Unexpected error
+    post:
+      summary: Perform operation on book.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operation:
+                  type: string
+                  enum: [borrow, purchase, setBorrowCost, setPurchaseCost]
+                payload:
+                  type: object
+      responses: 
+        '201':
+          description: Success
+        '400':
+          description: The specified operation failed or is invalid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Book not available for purchase.
+                  payload:
+                    type: object
+        default:
+          description: Unexpected error
+    delete:
+      summary: Delete book
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: A book with the specified ID was not found.
+        default:
+          description: Unexpected error
